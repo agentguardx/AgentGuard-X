@@ -56,8 +56,8 @@ sleep 0.5
 uvicorn triage.main:app --host 0.0.0.0 --port 8000 --reload > /tmp/agentguard.log 2>&1 &
 TRIAGE_PID=$!
 echo "Triage Engine PID: $TRIAGE_PID"
-echo "Waiting for startup (model loading takes ~5-10s)..."
-sleep 10
+echo "Waiting for startup (model loading takes ~15-20s)..."
+sleep 20
 
 # 6. Health check
 echo "[6/7] Running health check..."
