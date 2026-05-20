@@ -1,4 +1,3 @@
-import uuid
 import logging
 
 import sys
@@ -36,14 +35,12 @@ async def evaluate(request: TriageRequest) -> StageResult:
             details={"claimed_role": request.agent_role, "registered_role": registered_role},
         )
 
-    try:
-        uuid.UUID(request.session_id)
-    except ValueError:
+    if not request.session_id or not request.session_id.strip():
         return StageResult(
             stage=1,
             score=1.0,
             triggered=True,
-            reason=f"Invalid session_id format '{request.session_id}'. Must be a valid UUID.",
+            reason="session_id must not be empty.",
             details={"session_id": request.session_id},
         )
 
