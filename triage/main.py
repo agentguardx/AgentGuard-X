@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+import traceback
 from contextlib import asynccontextmanager
 
 import sys
@@ -8,8 +9,9 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from config import OPA_URL, OLLAMA_BASE_URL
 from triage.models import TriageRequest, TriageResponse
@@ -56,6 +58,16 @@ app.add_middleware(
 )
 
 app.include_router(review_router)
+
+
+@app.exception_handler(Exception)
+async def _global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    tb = traceback.format_exc()
+    logger.error("Unhandled exception on %s %s\n%s", request.method, request.url, tb)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "exception_type": type(exc).__name__},
+    )
 
 
 @app.get("/health")

@@ -100,7 +100,13 @@ def _triage_direct(
         "request_id": str(uuid.uuid4()),
     }
     resp = requests.post(TRIAGE_SERVICE_URL + "/triage", json=payload, timeout=30)
-    resp.raise_for_status()
+    if not resp.ok:
+        try:
+            body = resp.json()
+            detail = f"{body.get('exception_type', 'Error')}: {body.get('detail', resp.text[:200])}"
+        except Exception:
+            detail = resp.text[:300]
+        raise RuntimeError(f"HTTP {resp.status_code} — {detail}")
     return resp.json()
 
 

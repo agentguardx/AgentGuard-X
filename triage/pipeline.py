@@ -44,13 +44,23 @@ async def run_pipeline(request: TriageRequest) -> TriageResponse:
         )
         return resp
 
-    # Stages 2–5 run concurrently
-    s2, s3, s4, s5 = await asyncio.gather(
+    # Stages 2–5 run concurrently; return_exceptions prevents one stage crash
+    # from aborting the whole gather and returning a 500 to the caller.
+    raw = await asyncio.gather(
         stage2_signatures.evaluate(request),
         stage3_policy.evaluate(request),
         stage4_rag.evaluate(request),
         stage5_drift.evaluate(request),
+        return_exceptions=True,
     )
+
+    def _safe(result, stage_num: int) -> StageResult:
+        if isinstance(result, StageResult):
+            return result
+        logger.error("Stage %d raised unhandled exception: %s", stage_num, result)
+        return _skipped(stage_num, f"Stage {stage_num} internal error: {type(result).__name__}: {result}")
+
+    s2, s3, s4, s5 = (_safe(raw[0], 2), _safe(raw[1], 3), _safe(raw[2], 4), _safe(raw[3], 5))
 
     # Check instant-kill from Stage 2 before aggregation
     instant_kill = s2.details.get("instant_kill", False)

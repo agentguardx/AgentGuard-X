@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 async def evaluate(request: TriageRequest) -> StageResult:
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         hits = await asyncio.wait_for(
             loop.run_in_executor(None, knowledge_base.query, request.tool_input_raw, RAG_TOP_K),
             timeout=STAGE4_TIMEOUT,
