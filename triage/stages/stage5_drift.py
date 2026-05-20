@@ -112,7 +112,7 @@ def _compute_drift(session: list, baseline: list, request: TriageRequest) -> tup
 
 async def evaluate(request: TriageRequest) -> StageResult:
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
 
         def _load_state():
             session = redis_store.get_session(request.session_id)
@@ -152,7 +152,7 @@ async def evaluate(request: TriageRequest) -> StageResult:
             "timestamp": request.timestamp,
             "score": drift_score,
         }
-        await asyncio.get_event_loop().run_in_executor(
+        await asyncio.get_running_loop().run_in_executor(
             None, redis_store.append_to_session, request.session_id, new_event
         )
     except Exception as e:
